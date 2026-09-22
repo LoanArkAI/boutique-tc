@@ -1,0 +1,136 @@
+<title>Boutique TC Assistant Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sofia&family=Mulish:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+  :root{
+    --paper:#F5F5F5; --surface:#FFFFFF; --surface-2:#F0F0F0;
+    --ink:#313232; --ink-2:#56575A; --muted:#78787B; --rule:#DFDFE0;
+    --accent:#F47E47; --accent-ink:#C2521E; --accent-soft:#FCE9DE;
+    --ok:#2E7D74; --ok-soft:#DCEDEB; --warn:#8E6A15; --warn-soft:#F3E9CE;
+    --shadow:0 1px 2px rgba(22,33,28,.06),0 8px 24px rgba(22,33,28,.05);
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --paper:#171718; --surface:#212122; --surface-2:#2A2A2C; --ink:#F2F2F2; --ink-2:#C6C6C8;
+    --muted:#8E8E92; --rule:#323234; --accent:#F47E47; --accent-ink:#F79A6D; --accent-soft:#3A2419;
+    --ok:#57ABA0; --ok-soft:#173029; --warn:#D2A340; --warn-soft:#332811;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --paper:#171718; --surface:#212122; --surface-2:#2A2A2C; --ink:#F2F2F2; --ink-2:#C6C6C8;
+    --muted:#8E8E92; --rule:#323234; --accent:#F47E47; --accent-ink:#F79A6D; --accent-soft:#3A2419;
+    --ok:#57ABA0; --ok-soft:#173029; --warn:#D2A340; --warn-soft:#332811;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:"Mulish",system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:840px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+  header.mast{background:var(--surface);border-top:3px solid var(--accent);border-bottom:1px solid var(--rule)}
+  .mast-in{max-width:840px;margin:0 auto;padding-inline:20px;padding-block:24px 22px}
+  .mark{font-family:"Sofia",cursive;font-size:32px;line-height:1;color:var(--ink)}
+  .markSub{display:block;margin-top:4px;font-size:9.5px;font-weight:700;letter-spacing:.34em;text-transform:uppercase;color:var(--accent-ink)}
+  h1{font-weight:800;font-size:clamp(26px,5vw,36px);letter-spacing:-.02em;margin:14px 0 6px;text-wrap:balance}
+  .sub{color:var(--muted);margin:0;max-width:60ch}
+  h2{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin:40px 0 14px;color:var(--ink)}
+  h2 .n{color:var(--accent-ink);margin-right:8px}
+  p{margin:0 0 12px}
+  .card{background:var(--surface);border:1px solid var(--rule);border-radius:8px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:14px}
+  ol.flow{list-style:none;counter-reset:s;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+  ol.flow li{counter-increment:s;background:var(--surface);padding:15px 18px 15px 56px;position:relative}
+  ol.flow li::before{content:counter(s);position:absolute;left:16px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  ol.flow b{font-weight:800}
+  ol.flow .say{font-family:var(--mono);font-size:12.5px;color:var(--accent-ink);background:var(--accent-soft);padding:1px 6px;border-radius:3px}
+  .cmd{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:13px 16px;margin-bottom:10px}
+  .cmd .what{font-size:13.5px;color:var(--ink-2);max-width:40ch}
+  .cmd .what b{color:var(--ink);font-weight:700}
+  .cmd .phrase{font-family:var(--mono);font-size:13px;background:var(--surface-2);border:1px solid var(--rule);border-radius:5px;padding:7px 10px;color:var(--ink);cursor:pointer;display:inline-flex;gap:8px;align-items:center;white-space:normal;text-align:left}
+  .cmd .phrase:hover{border-color:var(--accent)}
+  .cmd .phrase .copy{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+  .cmd .phrase.copied{border-color:var(--ok)} .cmd .phrase.copied .copy{color:var(--ok)}
+  .note{display:flex;gap:10px;background:var(--accent-soft);border:1px solid var(--rule);border-left:3px solid var(--accent);border-radius:8px;padding:13px 16px;font-size:13.5px;margin:12px 0}
+  .note.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+  .auto{display:flex;gap:12px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--rule)}
+  .auto:last-child{border-bottom:0}
+  .auto .when{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent-ink);white-space:nowrap;min-width:120px}
+  .foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--muted)}
+</style>
+
+<header class="mast"><div class="mast-in">
+  <span class="mark">the boutique</span><span class="markSub">Real Estate Group</span>
+  <h1>Your transaction assistant — how to use it</h1>
+  <p class="sub">You work in Cowork. You talk to it in plain language; it reads the contract, does the date math, and sets up Follow Up Boss. You approve every date and every send. Here's the whole thing.</p>
+</div></header>
+
+<div class="wrap">
+
+  <h2><span class="n">A</span>Opening or updating a file</h2>
+  <p>The main job. Drop the contract or point it at the Dropbox folder, and it does the rest — with you confirming.</p>
+  <ol class="flow">
+    <li>A new file comes in. You say <span class="say">create a new deal</span> (or, to change one already in Follow Up Boss, <span class="say">update the deal for [address]</span>). If the contract's in Dropbox, say <span class="say">review the contracts in my Dropbox [folder]</span>.</li>
+    <li>It <b>finds the file</b> — a new deal, or the existing Follow Up Boss deal at that address. It never makes a duplicate; an existing file gets updated, not re-created.</li>
+    <li>It <b>reads the contract</b> from Dropbox (or the one you dropped in) and <b>pulls the dates</b> — acceptance, contingency removals (CR1/CR2), close of escrow.</li>
+    <li>It shows you a <b>dates table with confidence</b> and its source (which page it read each from). Derived dates (CR1/CR2, walkthrough) are computed the same way every time — 7 / 14 / 14 days, weekends and holidays rolled forward.</li>
+    <li><b>Any date missing or unclear?</b> It asks you. If it can't read one and you don't have it, that field stays <b>blank</b> — it will <b>not</b> push a guessed date to Follow Up Boss.</li>
+    <li><b>Wrong date?</b> Just tell it — "no, CR1 is October 4." It updates the table (and re-checks the others), then shows you the revised set.</li>
+    <li>It asks: <b>push these to Follow Up Boss?</b> Nothing is written until you say yes.</li>
+    <li>On yes, it <b>writes the deal</b> (dates in their fields), tags the file, and builds the task list — each task with its real due date.</li>
+  </ol>
+  <div class="note"><span>⚑</span><div><b>Then what?</b> The file is now live in Follow Up Boss with real deadlines. From there: the <b>board refreshes</b> to show it, the <b>inbox watch</b> starts catching its documents as they arrive, the <b>daily sweep</b> starts listing what's due or missing, and you can ask it to <b>draft any email</b> for the file. It rides the 30-day escrow clock to closing — where you send it to Cindy, then Caroline signs off.</div></div>
+
+  <h2><span class="n">B</span>Fixing the files already in Follow Up Boss</h2>
+  <div class="card">
+    <p>Your open escrows are in Follow Up Boss now but their date fields are blank — so no deadlines compute yet. Once the plugin is installed, you catch them up the same way, from the contracts in Dropbox:</p>
+    <p style="margin:0">Say <span class="say" style="font-family:var(--mono);font-size:12.5px;color:var(--accent-ink);background:var(--accent-soft);padding:1px 6px;border-radius:3px">back-fill the dates on my open escrows from the contracts in Dropbox</span> — it goes file by file: reads the contract, shows you the dates to confirm, then updates that Follow Up Boss deal. Same confirm gate, one file at a time, nothing guessed.</p>
+  </div>
+
+  <h2><span class="n">C</span>The commands (tap to copy)</h2>
+  <p>Say these in Cowork. Tap one to copy it, then paste — swap in the real address.</p>
+  <div id="cmds"></div>
+
+  <h2><span class="n">D</span>What happens on its own</h2>
+  <div class="card">
+    <div class="auto"><span class="when">7:27a &amp; 4:27p</span><div><b>Daily sweep</b> — a digest of every active file: what's due today, what's late, what you're waiting on others for, what's blocking a deadline. Lands as a draft to you, copy to Raj.</div></div>
+    <div class="auto"><span class="when">every ~2h</span><div><b>Inbox watch</b> — scans email &amp; DocuSign for documents your files are waiting on, matches them to the deal, and flags what arrived. It never closes a compliance item for you — it surfaces "confirm &amp; close."</div></div>
+    <div class="auto"><span class="when">on refresh</span><div><b>The board</b> updates with the latest from Follow Up Boss so it's current when you open it.</div></div>
+  </div>
+  <div class="note ok"><span>✓</span><div>These run while your Claude app is open. If it was closed when one was due, it runs at next launch.</div></div>
+
+  <h2><span class="n">E</span>The rules it always follows</h2>
+  <div class="card">
+    <p><b>It never guesses a date.</b> Unclear or missing → it asks or leaves it blank. A wrong contingency date is the one thing this exists to prevent.</p>
+    <p><b>It confirms before writing to Follow Up Boss</b> — every time.</p>
+    <p><b>Emails are drafts.</b> Anything to escrow, a lender, the other side, or a client is written for you to review and send — it never sends on its own.</p>
+    <p style="margin:0"><b>Caroline signs off.</b> At closing the file goes to Cindy to check, then to Caroline — the assistant never records a broker approval.</p>
+  </div>
+
+  <div class="foot">One-time setup: install the plugin, connect Executor (holds the Follow Up Boss key in its vault — you paste it once, it never touches Cowork after), and connect your Gmail / Dropbox / Calendar / DocuSign. After that, just talk to it. · The Boutique Real Estate Group · Concierge Desk</div>
+</div>
+
+<script>
+  var CMDS=[
+    ["Open a new file","create a new deal — here's the accepted contract for [address]"],
+    ["Update an existing file","update the deal for [address] with the new dates"],
+    ["Back-fill open escrows","back-fill the dates on my open escrows from the contracts in Dropbox"],
+    ["Review a folder of contracts","review the contracts in my Dropbox [folder] and pull the dates"],
+    ["See what's missing","what's missing on [address]?"],
+    ["Draft the intro emails","draft the accepted-offer intro emails for [address]"],
+    ["Order the home warranty","draft the warranty order to Staci for [address]"],
+    ["Send disclosures","draft the disclosure package email for [address]"],
+    ["Refresh the board","refresh the pipeline board"],
+    ["Morning list on demand","run the daily sweep across all my files"]
+  ];
+  var host=document.getElementById('cmds');
+  CMDS.forEach(function(c){
+    var row=document.createElement('div');row.className='cmd';
+    var what=document.createElement('div');what.className='what';what.innerHTML='<b>'+c[0]+'</b>';
+    var btn=document.createElement('button');btn.type='button';btn.className='phrase';
+    btn.innerHTML='<span class="txt"></span><span class="copy">copy</span>';
+    btn.querySelector('.txt').textContent=c[1];
+    function fallback(t,cb){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);cb();}
+    btn.addEventListener('click',function(){
+      var t=c[1];
+      function done(){btn.classList.add('copied');btn.querySelector('.copy').textContent='copied';setTimeout(function(){btn.classList.remove('copied');btn.querySelector('.copy').textContent='copy';},1400);}
+      try{navigator.clipboard.writeText(t).then(done,function(){fallback(t,done);});}catch(e){fallback(t,done);}
+    });
+    row.appendChild(what);row.appendChild(btn);host.appendChild(row);
+  });
+</script>

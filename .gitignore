@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+
+# Local test artifacts
+skills/create-deal/test_deal_spec.json
+
+# Never commit secrets or local env
+.env
+.env.*
+*.key
+
+# Context/scratch
+.context/
+
+# Full run records -- contain client data. The de-identified subset in
+# metrics/runs.jsonl is committed instead. See docs/skill-ops.md.
+runs/*
+!runs/README.md

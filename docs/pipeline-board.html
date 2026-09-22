@@ -1,0 +1,805 @@
+<title>Boutique Pipeline Board</title>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=Sofia&display=swap">
+<style>
+/* Brand tokens taken from theboutiquere.com:
+   coral #F47E47 · charcoal #313232 · grey #78787B · off-whites #F5F5F5 / #F0F0F0
+   Faces: Sofia (the script in their logo) + Mulish (stand-in for Colaborate, their
+   licensed body face, which is not available on a CSP-permitted font host). */
+:root{
+  --paper:#F5F5F5; --surface:#FFFFFF; --surface-2:#F0F0F0;
+  --ink:#313232; --ink-2:#56575A; --muted:#78787B;
+  --rule:#DFDFE0; --rule-2:#CDCDCE;
+  --accent:#F47E47; --accent-ink:#C2521E; --accent-soft:#FCE9DE;
+  --ok:#2E7D74; --ok-soft:#DCEDEB;
+  --warn:#8E6A15; --warn-soft:#F3E9CE;
+  --crit:#B3322C; --crit-soft:#F7DEDC;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#171718; --surface:#212122; --surface-2:#2A2A2C;
+  --ink:#F2F2F2; --ink-2:#C6C6C8; --muted:#8E8E92;
+  --rule:#323234; --rule-2:#3E3E41;
+  --accent:#F47E47; --accent-ink:#F79A6D; --accent-soft:#3A2419;
+  --ok:#57ABA0; --ok-soft:#173029;
+  --warn:#D2A340; --warn-soft:#332811;
+  --crit:#E8695E; --crit-soft:#381C1A;
+}}
+:root[data-theme="dark"]{
+  --paper:#171718; --surface:#212122; --surface-2:#2A2A2C;
+  --ink:#F2F2F2; --ink-2:#C6C6C8; --muted:#8E8E92;
+  --rule:#323234; --rule-2:#3E3E41;
+  --accent:#F47E47; --accent-ink:#F79A6D; --accent-soft:#3A2419;
+  --ok:#57ABA0; --ok-soft:#173029;
+  --warn:#D2A340; --warn-soft:#332811;
+  --crit:#E8695E; --crit-soft:#381C1A;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Mulish",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding-inline:18px; padding-block:0 60px}
+.tnum{font-variant-numeric:tabular-nums}
+.lbl{display:block; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:5px}
+
+.lockup{display:inline-block; line-height:1; margin-bottom:16px}
+.mark{display:block; font-family:"Sofia",cursive; font-weight:400; font-size:34px; color:var(--ink); line-height:1}
+.markSub{display:block; margin-top:5px; font-size:9.5px; font-weight:700; letter-spacing:.36em; text-transform:uppercase; color:var(--accent-ink)}
+
+header.mast{border-bottom:1px solid var(--rule); background:var(--surface); border-top:3px solid var(--accent)}
+.mast-in{
+  max-width:1180px; margin:0 auto; padding-inline:18px; padding-block:22px 20px;
+  display:flex; flex-wrap:wrap; gap:16px 28px; align-items:flex-end; justify-content:space-between;
+}
+h1{font-weight:800; font-size:clamp(25px,4.4vw,35px); line-height:1.08; margin:0 0 7px; letter-spacing:-.022em; text-wrap:balance}
+.eyebrow{font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--accent-ink); margin:0 0 9px}
+.sub{color:var(--muted); margin:0; font-size:13px; max-width:60ch}
+.asof{text-align:right; font-size:12px; color:var(--muted); line-height:1.7}
+.asof b{display:block; font-size:13px; color:var(--ink-2); font-weight:700}
+
+.kpis{
+  display:grid; gap:1px; background:var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(178px,1fr));
+  border:1px solid var(--rule); border-radius:4px; overflow:hidden; margin-top:26px;
+}
+.kpi{background:var(--surface); padding:16px 18px 15px}
+.kpi .k-label{font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:700}
+.kpi .k-val{font-size:29px; font-weight:800; line-height:1.1; margin-top:8px; letter-spacing:-.025em}
+.kpi .k-note{font-size:11.5px; color:var(--muted); margin-top:4px}
+.kpi.alarm .k-val,.kpi.alarm .k-note{color:var(--crit)}
+
+section{margin-top:44px}
+.sec-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:5px}
+h2{font-size:15px; font-weight:800; margin:0; letter-spacing:.14em; text-transform:uppercase}
+.sec-note{font-size:12px; color:var(--muted); margin:0 0 16px; max-width:76ch}
+.count-chip{font-size:10.5px; font-weight:700; letter-spacing:.06em; padding:3px 9px; border-radius:2px; background:var(--accent-soft); color:var(--accent-ink)}
+
+/* ---------- copy buttons + toast ---------- */
+.copybtn{
+  align-self:flex-start; font:inherit; font-size:11px; font-weight:700; letter-spacing:.03em;
+  cursor:pointer; padding:5px 11px; border-radius:3px; border:1px solid var(--accent);
+  background:var(--accent-soft); color:var(--accent-ink); white-space:nowrap; line-height:1.2;
+}
+.copybtn:hover{background:var(--accent); color:#fff}
+.copybtn:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.copybtn.mini{font-size:10px; padding:4px 9px}
+.rowcopy{margin-top:9px}
+.toast{
+  position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--paper); font-size:12.5px; font-weight:700;
+  padding:9px 16px; border-radius:4px; opacity:0; transition:opacity .18s, transform .18s;
+  pointer-events:none; z-index:50;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+/* ---------- command bar ---------- */
+.cmds{
+  display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule);
+  border-radius:4px; overflow:hidden; grid-template-columns:repeat(auto-fit,minmax(252px,1fr));
+}
+.cmd{background:var(--surface); padding:14px 16px 15px; display:flex; flex-direction:column; gap:9px}
+.cmd.feature{background:var(--accent-soft)}
+.cmd-t{font-size:13px; font-weight:800; letter-spacing:-.01em}
+.cmd-c{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; color:var(--accent-ink);
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:3px; padding:7px 9px;
+  line-height:1.45; word-break:break-word;
+}
+.cmd.feature .cmd-c{background:var(--surface)}
+.cmd-d{font-size:11.5px; color:var(--muted); line-height:1.45; margin-top:-1px}
+
+/* ---------- escrow clock ---------- */
+.clocks{display:flex; flex-direction:column; gap:14px}
+.clock{background:var(--surface); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.clock-top{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:baseline; justify-content:space-between; padding:13px 16px 11px; border-bottom:1px solid var(--rule)}
+.clock-name{font-weight:800; font-size:15px; letter-spacing:-.01em}
+.clock-meta{font-size:11.5px; color:var(--muted)}
+.clock-actions{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.clock-day{font-size:12px; font-weight:800; letter-spacing:.04em; padding:3px 10px; border-radius:2px; white-space:nowrap; background:var(--accent-soft); color:var(--accent-ink)}
+.clock-day.over{background:var(--crit-soft); color:var(--crit)}
+.clock-day.prov{background:var(--warn-soft); color:var(--warn)}
+.prov-tag{font-weight:700; color:var(--warn)}
+
+.rail{display:flex; gap:2px; padding:12px 16px 0}
+.rail-seg{flex:1; min-width:0}
+.rail-bar{height:6px; border-radius:1px; background:var(--rule-2)}
+.rail-seg.done .rail-bar{background:var(--ok)}
+.rail-seg.now .rail-bar{background:var(--accent)}
+.rail-seg.late .rail-bar{background:var(--crit)}
+.rail-lab{font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-top:6px; font-weight:700; line-height:1.25}
+.rail-seg.now .rail-lab{color:var(--accent-ink)}
+.rail-seg.late .rail-lab{color:var(--crit)}
+.rail-date{display:block; font-size:8.5px; letter-spacing:0; text-transform:none; color:var(--muted); font-weight:600; margin-top:2px}
+
+.clock-body{display:grid; gap:0 22px; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); padding:16px}
+.due-list{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px}
+.due-list li{font-size:12.5px; color:var(--ink-2); padding-left:15px; position:relative; line-height:1.45}
+.due-list li::before{content:""; position:absolute; left:0; top:7px; width:5px; height:5px; border-radius:50%; background:var(--accent)}
+.blockers{display:flex; flex-direction:column; gap:6px}
+.blocker{font-size:12px; color:var(--ink-2); display:flex; gap:8px; align-items:baseline}
+.blocker b{color:var(--crit); font-weight:800; white-space:nowrap; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase}
+.blocker.clear{color:var(--ok)}
+
+/* ---------- CR calculator ---------- */
+.calc{background:var(--surface); border:1px solid var(--rule); border-radius:4px; padding:18px}
+.calc-in{display:flex; flex-wrap:wrap; gap:14px 20px; align-items:flex-end; padding-bottom:16px; border-bottom:1px solid var(--rule)}
+.field{display:flex; flex-direction:column; gap:5px}
+.field label{font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:700}
+.field input{
+  font:inherit; font-size:14px; font-variant-numeric:tabular-nums; padding:7px 10px;
+  border:1px solid var(--rule-2); border-radius:3px; background:var(--surface-2); color:var(--ink);
+}
+.field input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.field input[type=number]{width:86px}
+.calc-hint{font-size:11.5px; color:var(--muted); max-width:34ch}
+.dates{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden; margin-top:16px}
+.drow{background:var(--surface); display:grid; grid-template-columns:minmax(0,1.4fr) auto minmax(0,1.5fr); gap:6px 16px; padding:10px 14px; align-items:baseline}
+.drow.key{background:var(--accent-soft)}
+.dname{font-size:13px; font-weight:700}
+.dday{font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap}
+.dval{font-size:13.5px; font-weight:800; font-variant-numeric:tabular-nums; text-align:right}
+.drow.key .dval,.drow.key .dname{color:var(--accent-ink)}
+.dmoved{display:block; font-size:10.5px; font-weight:600; color:var(--warn); letter-spacing:0; text-transform:none}
+
+/* ---------- triage ---------- */
+.triage{display:flex; flex-direction:column; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.row{
+  background:var(--surface); display:grid; gap:4px 18px;
+  grid-template-columns:5px minmax(0,2.1fr) minmax(0,1.5fr) minmax(0,1.7fr);
+  padding:13px 16px 13px 0; align-items:start;
+}
+.row .sev{grid-row:1 / -1; align-self:stretch}
+.sev.crit{background:var(--crit)} .sev.warn{background:var(--warn)} .sev.ok{background:var(--ok)}
+.r-name{font-weight:700; font-size:14.5px; letter-spacing:-.008em}
+.r-meta{font-size:11.5px; color:var(--muted); margin-top:3px}
+.r-meta .dot{opacity:.45; padding:0 5px}
+.r-next{font-size:13px; color:var(--ink-2)}
+.chips{display:flex; flex-wrap:wrap; gap:5px}
+.chip{font-size:10.5px; font-weight:700; padding:2.5px 7px; border-radius:2px; white-space:nowrap}
+.chip.c-crit{background:var(--crit-soft); color:var(--crit)}
+.chip.c-warn{background:var(--warn-soft); color:var(--warn)}
+.chip.c-ok{background:var(--ok-soft); color:var(--ok)}
+.price{font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent-ink)}
+.days{font-variant-numeric:tabular-nums; font-weight:700}
+.days.hot{color:var(--crit)}
+
+.board{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); align-items:start}
+.col{background:var(--surface); border:1px solid var(--rule); border-radius:4px; display:flex; flex-direction:column}
+.col-head{padding:11px 13px 10px; border-bottom:1px solid var(--rule); display:flex; align-items:baseline; justify-content:space-between; gap:8px}
+.col-head .cn{font-size:10.5px; font-weight:800; letter-spacing:.11em; text-transform:uppercase}
+.col-head .cv{font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.col-body{display:flex; flex-direction:column; gap:1px; background:var(--rule)}
+.card{background:var(--surface); padding:11px 13px 12px}
+.card .cname{font-size:13.5px; font-weight:700; line-height:1.3}
+.card .cprice{font-size:12px; color:var(--accent-ink); font-weight:700; font-variant-numeric:tabular-nums; margin-top:2px}
+.card .cmeta{font-size:11px; color:var(--muted); margin-top:5px; font-variant-numeric:tabular-nums}
+.card .chips{margin-top:7px}
+.empty{padding:14px 13px; font-size:11.5px; color:var(--muted); font-style:italic}
+
+/* ---------- field gap table ---------- */
+.gapwrap{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--surface)}
+table.gap{border-collapse:collapse; width:100%; min-width:560px}
+table.gap th,table.gap td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--rule); vertical-align:top}
+table.gap th{font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:700}
+table.gap tr:last-child td{border-bottom:0}
+table.gap td.f{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; white-space:nowrap; color:var(--accent-ink); font-weight:600}
+table.gap td.n{font-variant-numeric:tabular-nums; font-weight:800; white-space:nowrap}
+table.gap td.n.bad{color:var(--crit)}
+table.gap td.u{font-size:12.5px; color:var(--ink-2)}
+
+.chart{border:1px solid var(--rule); border-radius:4px; background:var(--surface); padding:20px 18px 14px}
+.bars{display:flex; align-items:flex-end; gap:clamp(6px,1.6vw,18px); height:150px}
+.bar-col{flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; min-width:0}
+.bar-val{font-size:11px; font-variant-numeric:tabular-nums; text-align:center; color:var(--ink-2); margin-bottom:5px; font-weight:700}
+.bar{background:var(--accent); border-radius:2px 2px 0 0; min-height:2px}
+.bar.partial{background:var(--accent-soft); border:1px solid var(--accent); border-bottom:0}
+.bar-x{display:flex; gap:clamp(6px,1.6vw,18px); margin-top:8px; padding-top:8px; border-top:1px solid var(--rule)}
+.bar-x div{flex:1; text-align:center; font-size:10.5px; color:var(--muted); min-width:0}
+.bar-x div b{display:block; color:var(--ink-2); font-weight:700; font-size:11px}
+.chart-foot{font-size:11.5px; color:var(--muted); margin-top:12px; max-width:80ch}
+
+.foot{margin-top:44px; padding-top:18px; border-top:1px solid var(--rule); font-size:11.5px; color:var(--muted); line-height:1.8; max-width:86ch}
+.foot b{color:var(--ink-2); font-weight:700}
+.foot code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; background:var(--surface-2); padding:1px 4px; border:1px solid var(--rule); border-radius:2px}
+
+@media (max-width:820px){
+  .clock-body{grid-template-columns:minmax(0,1fr); gap:18px}
+  .rail-lab{font-size:8px}
+}
+@media (max-width:780px){
+  .row{grid-template-columns:5px minmax(0,1fr); padding-right:14px; row-gap:10px}
+  .asof{text-align:left}
+  .drow{grid-template-columns:minmax(0,1fr) auto; row-gap:2px}
+  .dday{grid-column:2; text-align:right}
+  .dval{grid-column:1 / -1; text-align:left}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <div>
+      <span class="lockup"><span class="mark">the boutique</span><span class="markSub">Real Estate Group</span></span>
+      <p class="eyebrow">Follow Up Boss &middot; Concierge Desk</p>
+      <h1>Boutique Pipeline Board</h1>
+      <p class="sub">The transaction desk at a glance: every open file on its own acceptance-to-close clock, what the TBREG guide says is due right now, what dates are missing, and a copy-and-paste command for anything you want Claude to do next.</p>
+    </div>
+    <div class="asof">
+      <b id="acct">&nbsp;</b>
+      as of <span id="asof">&nbsp;</span><br>
+      pulled from Follow Up Boss &middot; refreshed on the daily sweep
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
+
+  <section>
+    <div class="sec-head"><h2>Ask Claude</h2><span class="count-chip">copy &amp; paste into Cowork</span></div>
+    <p class="sec-note">These run the plugin skills. Copy one, paste it to Claude in Cowork, and swap in the address where a command asks. Claude reads the contract, computes the dates, and confirms with you before it writes anything to Follow Up Boss &mdash; and it drafts emails, never sends.</p>
+    <div class="cmds" id="cmds"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Escrow clock</h2><span class="count-chip" id="clock-count">&nbsp;</span></div>
+    <p class="sec-note">Each open escrow on its own timeline &mdash; Day 0 is the contract&rsquo;s acceptance date and the finish is its real close of escrow, so a 21-day escrow and a 45-day escrow each scale to their own length. Until an acceptance date is on the record the day count falls back to time-in-stage and is marked provisional.</p>
+    <div class="clocks" id="clocks"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Contingency calculator</h2><span class="count-chip">Day 0 = acceptance</span></div>
+    <p class="sec-note">The CR math from the guide: count every day from acceptance &mdash; the RPA or the last counter signature &mdash; and roll any date landing on a weekend or federal holiday forward to the next business day. Investigation 7 days, loan and appraisal 14. Set the real days-to-COE from the contract; the walk-through and close scale off it.</p>
+    <div class="calc">
+      <div class="calc-in">
+        <div class="field">
+          <label for="acc-date">Acceptance date (Day 0)</label>
+          <input type="date" id="acc-date">
+        </div>
+        <div class="field">
+          <label for="coe-days">Days to COE</label>
+          <input type="number" id="coe-days" min="1" max="180" step="1" value="30">
+        </div>
+        <p class="calc-hint">RPA page 1, 3B carries the COE &mdash; not every escrow is 30 days, so read it off the contract and check the counters.</p>
+      </div>
+      <div class="dates" id="dates"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Missing from the record</h2><span class="count-chip" id="gap-count">&nbsp;</span></div>
+    <p class="sec-note">Follow Up Boss already carries a field for every date on the escrow timeline. These are blank across the open files, which is why the deadlines above can&rsquo;t yet be computed per deal.</p>
+    <div class="gapwrap">
+      <table class="gap">
+        <thead><tr><th>Follow Up Boss field</th><th>Blank</th><th>What filling it turns on</th></tr></thead>
+        <tbody id="gaprows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Needs attention</h2><span class="count-chip" id="triage-count">&nbsp;</span></div>
+    <p class="sec-note">Every open file ranked worst first. Severity comes from the record itself &mdash; an escrow with no close date outranks a listing that is simply young. Each row has a copy-command to hand it to Claude.</p>
+    <div class="triage" id="triage"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Sellers board</h2><span class="count-chip" id="sell-count">&nbsp;</span></div>
+    <p class="sec-note">Listing side, in stage order from intake through escrow.</p>
+    <div class="board" id="board-sellers"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Buyers board</h2><span class="count-chip" id="buy-count">&nbsp;</span></div>
+    <p class="sec-note">Buy side. Every open buyer file is already in escrow.</p>
+    <div class="board" id="board-buyers"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Closed volume by month</h2><span class="count-chip" id="closed-chip">&nbsp;</span></div>
+    <p class="sec-note">Sale price of files moved to Closed, by the month they closed.</p>
+    <div class="chart">
+      <div class="bars" id="bars"></div>
+      <div class="bar-x" id="barx"></div>
+      <p class="chart-foot" id="chartfoot">&nbsp;</p>
+    </div>
+  </section>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script id="payload" type="application/json">{"asOf": "2026-09-22", "account": "Sample Brokerage — demo data", "open": [{"id": 1, "name": "123 Example Ave", "price": 850000, "pipeline": "Buyers", "stage": "In Escrow", "enteredStageAt": "2026-09-08T17:00:00Z", "createdAt": "2026-09-08T17:00:00Z", "projectedCloseDate": "2026-10-08T00:00:00Z", "mutualAcceptanceDate": "2026-09-08T00:00:00Z", "dueDiligenceDate": "2026-09-15T00:00:00Z", "earnestMoneyDueDate": "2026-09-11T00:00:00Z", "customCR2Date": "2026-09-22T00:00:00Z", "finalWalkThroughDate": "2026-10-03T00:00:00Z", "possessionDate": null, "commission": 21250, "people": [{"id": 101, "name": "Sample Buyer A"}], "users": ["Agent One"]}, {"id": 2, "name": "456 Demo Street", "price": 1200000, "pipeline": "Sellers", "stage": "In Escrow", "enteredStageAt": "2026-09-12T17:00:00Z", "createdAt": "2026-09-01T17:00:00Z", "projectedCloseDate": null, "mutualAcceptanceDate": null, "dueDiligenceDate": null, "earnestMoneyDueDate": null, "customCR2Date": null, "finalWalkThroughDate": null, "possessionDate": null, "commission": 0, "people": [{"id": 102, "name": "Sample Seller B"}], "users": ["Agent Two"]}, {"id": 3, "name": "789 Sample Blvd", "price": 675000, "pipeline": "Sellers", "stage": "Active (on MLS)", "enteredStageAt": "2026-09-05T17:00:00Z", "createdAt": "2026-08-20T17:00:00Z", "projectedCloseDate": null, "mutualAcceptanceDate": null, "dueDiligenceDate": null, "earnestMoneyDueDate": null, "customCR2Date": null, "finalWalkThroughDate": null, "possessionDate": null, "commission": 0, "people": [], "users": ["Agent One"]}], "closedByMonth": [{"m": "2026-05", "n": 3, "v": 2400000}, {"m": "2026-06", "n": 4, "v": 3100000}, {"m": "2026-07", "n": 2, "v": 1500000}, {"m": "2026-08", "n": 5, "v": 4200000}, {"m": "2026-09", "n": 1, "v": 720000}], "canceled": 1, "closedTotal": {"n": 15, "v": 11920000}, "contacts": {"101": {"name": "Sample Buyer A", "lastActivity": "2026-09-20", "assignedTo": "Agent One", "phone": true, "email": true, "unsub": false}, "102": {"name": "Sample Seller B", "lastActivity": "2026-09-14", "assignedTo": "Agent Two", "phone": false, "email": true, "unsub": false}}, "openTasksOnLiveDeals": 2, "totalOpenTasksAccount": 40}</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('payload').textContent);
+  var AS_OF = new Date(D.asOf + 'T12:00:00Z');
+  var DAY = 86400000;
+
+  function days(iso){ if(!iso) return null; return Math.max(0, Math.round((AS_OF - new Date(iso)) / DAY)); }
+  function dnum(a, b){ return Math.round((a - b) / DAY); }
+  function toDate(iso){ return iso ? new Date(iso) : null; }
+  function addDays(dt, n){ return new Date(dt.getTime() + n * DAY); }
+  function fmtMD(dt){ return dt.toLocaleDateString('en-US', {timeZone:'UTC', month:'short', day:'numeric'}); }
+  function usd(n){
+    if(n == null) return '—';
+    if(n >= 1e6) return '$' + (n/1e6).toFixed(n >= 1e7 ? 1 : 2).replace(/\.?0+$/,'') + 'M';
+    if(n >= 1e3) return '$' + Math.round(n/1e3) + 'K';
+    return '$' + n;
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  /* ---------- copy to clipboard ---------- */
+  var toastEl = document.getElementById('toast'), toastT;
+  function toast(m){
+    toastEl.textContent = m; toastEl.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove('show'); }, 1600);
+  }
+  function flash(btn){
+    if(!btn) return; var o = btn.textContent; btn.textContent = 'Copied ✓';
+    setTimeout(function(){ btn.textContent = o; }, 1400);
+  }
+  function fallbackCopy(text, ok, fail){
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      var done = document.execCommand('copy'); document.body.removeChild(ta);
+      done ? ok() : fail();
+    }catch(e){ fail(); }
+  }
+  function doCopy(text, btn){
+    var ok = function(){ toast('Copied to clipboard'); flash(btn); };
+    var fail = function(){ toast('Copy failed — select the command and copy it manually'); };
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(ok, function(){ fallbackCopy(text, ok, fail); });
+      } else { fallbackCopy(text, ok, fail); }
+    }catch(e){ fallbackCopy(text, ok, fail); }
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-copy]') : null;
+    if(!b) return;
+    doCopy(b.getAttribute('data-copy'), b);
+  });
+  function copyBtn(text, label, cls){
+    return '<button class="copybtn' + (cls ? ' ' + cls : '') + '" type="button" data-copy="' + esc(text) + '">' + esc(label) + '</button>';
+  }
+
+  /* ---------- command bar ---------- */
+  var CMDS = [
+    {t:'Create a new deal', feature:true,
+     c:'Create a new deal.',
+     d:'From an executed RPA — drop the PDF in chat, or point Claude at the contract in Dropbox. It reads the dates and confirms before writing.'},
+    {t:'Review new contracts (Dropbox)', feature:true,
+     c:'Review new contracts in the Dropbox contracts folder and open any that aren’t in Follow Up Boss yet.',
+     d:'Claude scans the shared folder, finds contracts with no FUB deal, and sets each one up after you confirm the dates.'},
+    {t:'Update an existing deal',
+     c:'Update the deal for [address] with the latest contract dates.',
+     d:'For counters and amendments that move the dates. Additive — it never overwrites client data.'},
+    {t:'What’s missing',
+     c:'What is missing across my open Follow Up Boss files?',
+     d:'Lists every blank date and field that is blocking a deadline, worst first.'},
+    {t:'Draft the intro emails',
+     c:'Draft the intro emails for [address].',
+     d:'Escrow, lender and listing-agent intros from the TBREG templates — left as drafts for you to send.'},
+    {t:'Run the daily sweep',
+     c:'Run the daily sweep.',
+     d:'Reconciles open files against Gmail, DocuSign and Dropbox and drafts one digest to you, cc Raj.'},
+    {t:'Refresh this board',
+     c:'Refresh the pipeline board.',
+     d:'Re-pulls Follow Up Boss and republishes this page. Runs automatically on the daily sweep.'}
+  ];
+  document.getElementById('cmds').innerHTML = CMDS.map(function(m){
+    return '<div class="cmd' + (m.feature ? ' feature' : '') + '">' +
+      '<div class="cmd-t">' + esc(m.t) + '</div>' +
+      '<div class="cmd-c">' + esc(m.c) + '</div>' +
+      '<div class="cmd-d">' + esc(m.d) + '</div>' +
+      copyBtn(m.c, 'Copy command') +
+    '</div>';
+  }).join('');
+
+  /* ---------- TBREG action zones, from the reference guide ---------- */
+  var ACTS = {
+    open:['Grab the MLS sheet, start the DB and the SkySlope file'],
+    emd:['Escrow notifies on the EMD deposit — confirm it landed and file the receipt',
+         'Open the escrow packet: page 17, prelim, NHD, deposit receipt'],
+    disclose:['Disclosures: on buy side send out by DocuSign, on listing side email to buy side',
+         'Chase both AVIDs — one from each agent side',
+         'Confirm the commission figure with the agent, get it signed and back to escrow'],
+    contingency:['RR and CR timelines are running — CR dates should be on the calendar',
+         'Disclosures back by Day 10; start the 01 checklist',
+         'Buy side: RPA page 3 Q18 — order the home warranty (Staci, SMClayton@fnf.com) or get the waiver signed',
+         'Ask for the reports — home inspection, termite, anything outstanding; make the missing-items list'],
+    cleanup:['Other agent’s AD form',
+         'Anything missing or pending initials and signatures',
+         'Confirm what says FE actually is FE; do a room check'],
+    preclose:['Final walk-through — ask for the VP 3 to 5 days before COE',
+         'Send the final emails before closing',
+         'Confirm with escrow that you are closing on time; send to Cindy to check the file'],
+    past:['Past the projected close — confirm the real close date with escrow',
+         'Ask escrow for the closing packet; collect 04, 11 and 28',
+         'Prep the file and the link for Caroline']
+  };
+  function zoneActs(el, total){
+    if(el < 3) return ACTS.open;
+    if(el < 5) return ACTS.emd;
+    if(el < 10) return ACTS.disclose;
+    if(el <= Math.max(15, total - 6)) return ACTS.contingency;
+    if(el <= total - 1) return ACTS.cleanup;
+    if(el <= total) return ACTS.preclose;
+    return ACTS.past;
+  }
+
+  /* fallback bands, used only until a real acceptance date is on the file */
+  var BANDS = [
+    {lo:1, hi:2, key:'Open', label:'Day 1–2', acts:ACTS.open},
+    {lo:3, hi:4, key:'EMD', label:'Day 3–4', acts:ACTS.emd},
+    {lo:5, hi:9, key:'Disclose', label:'Day 5–9', acts:ACTS.disclose},
+    {lo:10, hi:19, key:'CR', label:'Day 10–19', acts:ACTS.contingency},
+    {lo:20, hi:25, key:'Cleanup', label:'Day 20–25', acts:ACTS.cleanup},
+    {lo:26, hi:30, key:'Pre-close', label:'Day 26–30', acts:ACTS.preclose},
+    {lo:31, hi:9999, key:'Past 30', label:'Day 31+', acts:ACTS.past}
+  ];
+  function bandFor(d){
+    for(var i = 0; i < BANDS.length; i++){ if(d >= BANDS[i].lo && d <= BANDS[i].hi) return BANDS[i]; }
+    return BANDS[0];
+  }
+
+  var NEXT = {
+    'Temp (start)'   : 'Qualify and set the listing appointment — this is the default intake stage, not a real one',
+    'Coming Soon'    : 'Lock the go-live date, confirm photography and staging, then push to MLS',
+    'Active (on MLS)': 'Showing and price review with the seller; log the feedback call',
+    'In Escrow'      : 'Confirm EMD receipt and set inspection, appraisal and contingency-removal dates'
+  };
+  var STAGE_ORDER = {
+    'Sellers': ['Temp (start)','Coming Soon','Active (on MLS)','In Escrow'],
+    'Buyers' : ['Temp (start)','In Escrow']
+  };
+
+  var deals = D.open.map(function(d){
+    var inStage = days(d.enteredStageAt);
+    var age = days(d.createdAt);
+    var person = d.people[0] || null;
+    var c = person ? D.contacts[String(person.id)] : null;
+    var quiet = c ? days(c.lastActivity + 'T12:00:00Z') : null;
+    var escrow = d.stage === 'In Escrow';
+
+    var flags = [];
+    if(escrow && !d.projectedCloseDate) flags.push({t:'no close date', s:'crit'});
+    if(escrow && !d.mutualAcceptanceDate && !d.dueDiligenceDate && !d.earnestMoneyDueDate) flags.push({t:'no contract dates', s:'crit'});
+    if(!person) flags.push({t:'no client attached', s:'crit'});
+    if(d.stage === 'Temp (start)' && inStage > 30) flags.push({t:'parked ' + inStage + 'd in intake', s:'crit'});
+    else if(d.stage === 'Temp (start)') flags.push({t:'still in intake stage', s:'warn'});
+    if(!d.commission) flags.push({t:'commission $0', s:'warn'});
+    if(quiet != null && quiet > 21) flags.push({t:'no contact ' + quiet + 'd', s:'crit'});
+    else if(quiet != null && quiet > 10) flags.push({t:'quiet ' + quiet + 'd', s:'warn'});
+    if(c && c.unsub) flags.push({t:'client unsubscribed', s:'warn'});
+    if(c && !c.phone) flags.push({t:'no phone on file', s:'warn'});
+    flags.push({t:'0 open tasks', s:'crit'});
+
+    var sev = flags.some(function(f){ return f.s === 'crit'; }) ? 'crit' : (flags.length ? 'warn' : 'ok');
+
+    return Object.assign({}, d, {
+      inStage:inStage, age:age, person:person, contact:c, quiet:quiet,
+      flags:flags, sev:sev, escrow:escrow, next: NEXT[d.stage] || 'Set the next step'
+    });
+  });
+
+  var SEVRANK = {crit:0, warn:1, ok:2};
+  var ranked = deals.slice().sort(function(a,b){
+    if(SEVRANK[a.sev] !== SEVRANK[b.sev]) return SEVRANK[a.sev] - SEVRANK[b.sev];
+    var ac = a.flags.filter(function(f){ return f.s === 'crit'; }).length;
+    var bc = b.flags.filter(function(f){ return f.s === 'crit'; }).length;
+    if(ac !== bc) return bc - ac;
+    return b.price - a.price;
+  });
+
+  document.getElementById('acct').textContent = D.account;
+  document.getElementById('asof').textContent = AS_OF.toLocaleDateString('en-US', {timeZone:'UTC', month:'long', day:'numeric', year:'numeric'});
+
+  var escrowDeals = deals.filter(function(d){ return d.escrow; })
+                         .sort(function(a,b){ return b.inStage - a.inStage; });
+  var escrowVal = escrowDeals.reduce(function(s,d){ return s + d.price; }, 0);
+  var noClient = deals.filter(function(d){ return !d.person; }).length;
+  var pastCR = escrowDeals.filter(function(d){ return d.inStage >= 10 && !d.dueDiligenceDate; }).length;
+  var stuck = deals.filter(function(d){ return d.stage === 'Temp (start)' && d.inStage > 30; }).length;
+
+  var kpis = [
+    {l:'Files in escrow', v:escrowDeals.length, n:usd(escrowVal) + ' under contract'},
+    {l:'Escrows with no acceptance date', v:escrowDeals.filter(function(d){ return !d.mutualAcceptanceDate; }).length + ' of ' + escrowDeals.length,
+     n:'Day 0 is unknown, so the clock is provisional', alarm:true},
+    {l:'Past Day 10, no CR dates set', v:pastCR, n:'contingency clock running unrecorded', alarm:pastCR > 0},
+    {l:'Open tasks on live files', v:D.openTasksOnLiveDeals, n:'no next step scheduled on any open deal', alarm:D.openTasksOnLiveDeals === 0},
+    {l:'Files with no client attached', v:noClient + ' of ' + deals.length, n:'not reachable from a contact record', alarm:noClient > 0},
+    {l:'Listings parked in intake 30d+', v:stuck, n:'never moved out of the default stage', alarm:stuck > 0}
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(function(k){
+    return '<div class="kpi' + (k.alarm ? ' alarm' : '') + '">' +
+      '<div class="k-label">' + esc(k.l) + '</div>' +
+      '<div class="k-val tnum">' + esc(k.v) + '</div>' +
+      '<div class="k-note">' + esc(k.n) + '</div></div>';
+  }).join('');
+
+  /* ---------- escrow clock — per-deal acceptance→COE ---------- */
+  document.getElementById('clock-count').textContent =
+    escrowDeals.length + ' in escrow · ' + usd(escrowVal);
+
+  document.getElementById('clocks').innerHTML = escrowDeals.map(function(d){
+    var acc = toDate(d.mutualAcceptanceDate);
+    var railHTML, actsList, dayChip, dayCls, provisional = false;
+
+    if(acc){
+      var close = toDate(d.projectedCloseDate);
+      var total = close ? Math.max(1, dnum(close, acc)) : 30;
+      var elapsed = Math.max(0, dnum(AS_OF, acc));
+      var over = elapsed > total;
+      dayChip = 'Day ' + elapsed + ' of ' + total;
+      dayCls = over ? ' over' : '';
+
+      var coe = close || addDays(acc, 30);
+      var ms = [
+        {k:'Accept', day:0, date:acc},
+        {k:'EMD', day:3, date:toDate(d.earnestMoneyDueDate) || addDays(acc, 3)},
+        {k:'CR1', day:7, date:toDate(d.dueDiligenceDate) || addDays(acc, 7)},
+        {k:'CR2', day:14, date:toDate(d.customCR2Date) || addDays(acc, 14)},
+        {k:'VP', day:Math.max(15, total - 5), date:toDate(d.finalWalkThroughDate) || addDays(coe, -5)},
+        {k:'COE', day:total, date:coe}
+      ];
+      var curFound = false;
+      railHTML = ms.map(function(m){
+        var cls = 'rail-seg';
+        if(over && m.k === 'COE'){ cls += ' late'; }
+        else if(!curFound && elapsed <= m.day){ cls += ' now'; curFound = true; }
+        else if(m.day < elapsed){ cls += ' done'; }
+        return '<div class="' + cls + '"><div class="rail-bar"></div>' +
+          '<div class="rail-lab">' + esc(m.k) + '<span class="rail-date">' + esc(fmtMD(m.date)) + '</span></div></div>';
+      }).join('');
+      actsList = zoneActs(elapsed, total);
+    } else {
+      provisional = true;
+      var band = bandFor(Math.max(1, d.inStage));
+      var lateP = d.inStage > 30;
+      dayChip = 'Day ' + d.inStage + ' in FUB';
+      dayCls = ' prov';
+      railHTML = BANDS.map(function(b){
+        var cls = 'rail-seg';
+        if(b.key === band.key) cls += lateP ? ' late' : ' now';
+        else if(b.hi < d.inStage) cls += ' done';
+        return '<div class="' + cls + '"><div class="rail-bar"></div><div class="rail-lab">' + esc(b.key) + '</div></div>';
+      }).join('');
+      actsList = band.acts;
+    }
+
+    var blockers = [];
+    if(!d.mutualAcceptanceDate) blockers.push(['Day 0', 'No acceptance date — the clock is provisional and every CR below is uncomputable until it is entered']);
+    if(!d.earnestMoneyDueDate) blockers.push(['EMD', 'No earnest-money due date — nothing confirms the Day 3 deposit landed']);
+    if(!d.dueDiligenceDate) blockers.push(['CR1', 'No investigation contingency date — the Day 7 removal is not on any calendar']);
+    if(!d.projectedCloseDate) blockers.push(['COE', 'No projected close date — the escrow length is assumed 30 days and cannot be held to closing on time']);
+    if(!d.finalWalkThroughDate) blockers.push(['VP', 'No walk-through date — the 3-to-5-day-before-COE ask has no trigger']);
+    if(!d.person) blockers.push(['Client', 'No contact attached — no one to send disclosures to from the record']);
+    if(!d.commission) blockers.push(['Commission', 'Commission is $0 — nothing to check the escrow instructions against']);
+
+    return '<div class="clock">' +
+      '<div class="clock-top">' +
+        '<div><div class="clock-name">' + esc(d.name) + '</div>' +
+        '<div class="clock-meta">' + usd(d.price) + ' · ' + esc(d.pipeline) + ' side · ' +
+          esc(d.person ? d.person.name : 'no client attached') + ' · ' +
+          esc(d.users.length ? d.users[d.users.length - 1] : 'unassigned') +
+          (provisional ? ' · <span class="prov-tag">provisional clock</span>' : '') + '</div></div>' +
+        '<div class="clock-actions">' +
+          '<span class="clock-day' + dayCls + '">' + esc(dayChip) + '</span>' +
+          copyBtn('Update the deal for ' + d.name + ' with the latest contract dates.', 'Copy update command', 'mini') +
+        '</div>' +
+      '</div>' +
+      '<div class="rail">' + railHTML + '</div>' +
+      '<div class="clock-body">' +
+        '<div><span class="lbl">Due in this window</span><ul class="due-list">' +
+          actsList.map(function(a){ return '<li>' + esc(a) + '</li>'; }).join('') +
+        '</ul></div>' +
+        '<div><span class="lbl">Blocked by missing data</span><div class="blockers">' +
+          (blockers.length
+            ? blockers.map(function(b){ return '<div class="blocker"><b>' + esc(b[0]) + '</b><span>' + esc(b[1]) + '</span></div>'; }).join('')
+            : '<div class="blocker clear"><span>Nothing missing — this file has every date it needs.</span></div>') +
+        '</div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  /* ---------- contingency calculator ---------- */
+  var HOLIDAYS = {
+    '2026-01-01':1,'2026-01-19':1,'2026-02-16':1,'2026-05-25':1,'2026-06-19':1,'2026-07-03':1,
+    '2026-09-07':1,'2026-10-12':1,'2026-11-11':1,'2026-11-26':1,'2026-12-25':1,
+    '2027-01-01':1,'2027-01-18':1,'2027-02-15':1,'2027-05-31':1,'2027-06-18':1,'2027-07-05':1,
+    '2027-09-06':1,'2027-10-11':1,'2027-11-11':1,'2027-11-25':1,'2027-12-24':1
+  };
+  function key(dt){
+    return dt.getUTCFullYear() + '-' +
+      String(dt.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(dt.getUTCDate()).padStart(2, '0');
+  }
+  function fmt(dt){
+    return dt.toLocaleDateString('en-US', {timeZone:'UTC', weekday:'short', month:'short', day:'numeric'});
+  }
+  function roll(dt){
+    var d = new Date(dt.getTime()), moved = false, guard = 0;
+    while(guard++ < 14 && (d.getUTCDay() === 0 || d.getUTCDay() === 6 || HOLIDAYS[key(d)])){
+      d.setUTCDate(d.getUTCDate() + 1); moved = true;
+    }
+    return {date:d, moved:moved};
+  }
+
+  var accEl = document.getElementById('acc-date');
+  var coeEl = document.getElementById('coe-days');
+  var datesEl = document.getElementById('dates');
+
+  function renderDates(){
+    var v = accEl.value;
+    if(!v){ datesEl.innerHTML = '<div class="drow"><span class="dname">Enter an acceptance date to run the timeline.</span></div>'; return; }
+    var base = new Date(v + 'T12:00:00Z');
+    if(isNaN(base)){ datesEl.innerHTML = '<div class="drow"><span class="dname">That date could not be read.</span></div>'; return; }
+    var coe = Math.min(180, Math.max(1, parseInt(coeEl.value, 10) || 30));
+
+    var rows = [
+      {n:'Acceptance — Day 0', d:0, note:'RPA or the last counter signature', raw:true},
+      {n:'EMD deposit', d:3, note:'escrow notifies'},
+      {n:'CR1 — investigation', d:7, note:'removes all except loan and appraisal', key:true},
+      {n:'Loan contingency', d:14, note:'RPA page 2, L'},
+      {n:'Appraisal contingency', d:14, note:'RPA page 2, L'},
+      {n:'CR2 — final', d:14, note:'removes all remaining', key:true},
+      {n:'Ask for the VP', d:coe - 5, note:'3 to 5 days before COE'},
+      {n:'Close of escrow', d:coe, note:'RPA page 1, 3B — check the counters', key:true}
+    ];
+
+    datesEl.innerHTML = rows.map(function(r){
+      var raw = new Date(base.getTime() + r.d * DAY);
+      var out = r.raw ? {date:raw, moved:false} : roll(raw);
+      return '<div class="drow' + (r.key ? ' key' : '') + '">' +
+        '<span class="dname">' + esc(r.n) + '</span>' +
+        '<span class="dday">Day ' + r.d + '<span class="dmoved">' + esc(r.note) + '</span></span>' +
+        '<span class="dval">' + esc(fmt(out.date)) +
+          (out.moved ? '<span class="dmoved">rolled from ' + esc(fmt(raw)) + '</span>' : '') +
+        '</span></div>';
+    }).join('');
+  }
+
+  try { var saved = localStorage.getItem('tbreg-acc'); if(saved) accEl.value = saved; } catch(e){}
+  if(!accEl.value) accEl.value = D.asOf;
+  accEl.addEventListener('input', function(){
+    try { localStorage.setItem('tbreg-acc', accEl.value); } catch(e){}
+    renderDates();
+  });
+  coeEl.addEventListener('input', renderDates);
+  renderDates();
+
+  /* ---------- field gap ---------- */
+  var GAPS = [
+    {f:'mutualAcceptanceDate', u:'Day 0. Every contingency, the EMD date and the COE all count from here.'},
+    {f:'earnestMoneyDueDate', u:'The Day 3 deposit check — confirms escrow notified and the receipt is filed.'},
+    {f:'dueDiligenceDate', u:'CR1, the investigation removal at Day 7.'},
+    {f:'customCR1 / customCR2Date', u:'The two contingency removals, already on the deal record and ready to hold the computed dates.'},
+    {f:'projectedCloseDate', u:'COE. Sets the escrow length and drives the pre-close window and the on-time check with escrow.'},
+    {f:'finalWalkThroughDate', u:'The VP ask, 3 to 5 days before COE.'},
+    {f:'commissionValue', u:'Checks the escrow commission instructions before they go back signed.'}
+  ];
+  function blankCount(field){
+    if(field === 'customCR1 / customCR2Date')
+      return escrowDeals.filter(function(d){ return !d.customCR1 && !d.customCR2Date; }).length;
+    if(field === 'commissionValue') return escrowDeals.filter(function(d){ return !d.commission; }).length;
+    return escrowDeals.filter(function(d){ return !d[field]; }).length;
+  }
+  document.getElementById('gap-count').textContent = escrowDeals.length + ' escrows checked';
+  document.getElementById('gaprows').innerHTML = GAPS.map(function(g){
+    var n = blankCount(g.f);
+    return '<tr><td class="f">' + esc(g.f) + '</td>' +
+      '<td class="n' + (n > 0 ? ' bad' : '') + '">' + n + ' of ' + escrowDeals.length + '</td>' +
+      '<td class="u">' + esc(g.u) + '</td></tr>';
+  }).join('');
+
+  /* ---------- triage ---------- */
+  function chipsHTML(flags){
+    return '<div class="chips">' + flags.map(function(f){
+      return '<span class="chip c-' + f.s + '">' + esc(f.t) + '</span>';
+    }).join('') + '</div>';
+  }
+  document.getElementById('triage').innerHTML = ranked.map(function(d){
+    var who = d.person ? d.person.name : 'no client on file';
+    var agent = d.users.length ? d.users[d.users.length - 1] : 'unassigned';
+    return '<div class="row">' +
+      '<div class="sev ' + d.sev + '"></div>' +
+      '<div><div class="r-name">' + esc(d.name) + '</div>' +
+        '<div class="r-meta"><span class="price">' + usd(d.price) + '</span><span class="dot">·</span>' +
+        esc(d.pipeline) + ' · ' + esc(d.stage) + '<span class="dot">·</span>' +
+        '<span class="days' + (d.inStage > 30 ? ' hot' : '') + '">' + d.inStage + 'd in stage</span>' +
+        '<span class="dot">·</span>' + esc(who) + '<span class="dot">·</span>' + esc(agent) + '</div></div>' +
+      '<div class="r-next"><span class="lbl">Next move</span>' + esc(d.next) + '</div>' +
+      '<div><span class="lbl">Missing / delayed</span>' + chipsHTML(d.flags) +
+        '<div class="rowcopy">' + copyBtn('Update the deal for ' + d.name + ' with the latest contract dates.', 'Copy command', 'mini') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('triage-count').textContent =
+    ranked.filter(function(d){ return d.sev === 'crit'; }).length + ' critical of ' + ranked.length;
+
+  function board(pipeline, elId, chipId){
+    var mine = deals.filter(function(d){ return d.pipeline === pipeline; });
+    document.getElementById(chipId).textContent =
+      mine.length + ' files · ' + usd(mine.reduce(function(s,d){ return s + d.price; }, 0));
+    document.getElementById(elId).innerHTML = STAGE_ORDER[pipeline].map(function(st){
+      var inSt = mine.filter(function(d){ return d.stage === st; }).sort(function(a,b){ return b.inStage - a.inStage; });
+      var val = inSt.reduce(function(s,d){ return s + d.price; }, 0);
+      var body = inSt.length ? inSt.map(function(d){
+        var top = d.flags.filter(function(f){ return f.s === 'crit'; }).slice(0,3);
+        if(!top.length) top = d.flags.slice(0,2);
+        return '<div class="card">' +
+          '<div class="cname">' + esc(d.name) + '</div>' +
+          '<div class="cprice">' + usd(d.price) + '</div>' +
+          '<div class="cmeta">' + d.inStage + 'd in stage · ' + d.age + 'd old · ' +
+            esc(d.person ? d.person.name : 'no client') + '</div>' +
+          chipsHTML(top) + '</div>';
+      }).join('') : '<div class="empty">No files in this stage.</div>';
+      return '<div class="col"><div class="col-head">' +
+        '<span class="cn">' + esc(st) + '</span>' +
+        '<span class="cv">' + inSt.length + ' · ' + usd(val) + '</span></div>' +
+        '<div class="col-body">' + body + '</div></div>';
+    }).join('');
+  }
+  board('Sellers', 'board-sellers', 'sell-count');
+  board('Buyers', 'board-buyers', 'buy-count');
+
+  var cb = D.closedByMonth;
+  var max = Math.max.apply(null, cb.map(function(m){ return m.v; }));
+  var thisMonth = D.asOf.slice(0, 7);
+  document.getElementById('bars').innerHTML = cb.map(function(m){
+    return '<div class="bar-col">' +
+      '<div class="bar-val">' + usd(m.v) + '</div>' +
+      '<div class="bar' + (m.m === thisMonth ? ' partial' : '') + '" style="height:' + Math.round((m.v / max) * 100) + '%"></div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('barx').innerHTML = cb.map(function(m){
+    return '<div><b>' + new Date(m.m + '-15T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',month:'short'}) + '</b>' +
+      m.n + ' file' + (m.n === 1 ? '' : 's') + '</div>';
+  }).join('');
+  var peak = cb.reduce(function(a,b){ return b.v > a.v ? b : a; });
+  var last = cb[cb.length - 1];
+  document.getElementById('closed-chip').textContent = D.closedTotal.n + ' closed · ' + usd(D.closedTotal.v);
+  document.getElementById('chartfoot').textContent =
+    'Peak was ' + usd(peak.v) + ' across ' + peak.n + ' files in ' +
+    new Date(peak.m + '-15T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',month:'long'}) +
+    '. The current month is partial (' + usd(last.v) + ' so far, shown hollow) and each of the last four months ran below that peak.';
+
+  document.getElementById('foot').innerHTML =
+    '<b>Where this comes from.</b> A pull of <code>deals</code>, <code>tasks</code> and <code>people</code> from Follow Up Boss for ' +
+    esc(D.account) + ' on ' + esc(D.asOf) + ', through the Executor vault (the API key never touches this page). Canceled files (' + D.canceled + ') are excluded.<br>' +
+    '<b>Refreshing.</b> This page can&rsquo;t reach Follow Up Boss on its own, so it&rsquo;s regenerated by Claude — say <code>Refresh the pipeline board</code>, or let the daily sweep republish it twice a day.<br>' +
+    '<b>The timeline and CR math</b> are from the TBREG Transaction Coordination Reference Guide — the Day 0 rule and the 7 / 14 / 14 contingency intervals with the weekend and holiday roll-forward. Each escrow scales to its own acceptance-to-COE length, not a fixed 30 days. The calculator uses US federal holidays; add brokerage closures by hand.<br>' +
+    '<b>Provisional clocks.</b> Where no acceptance date is on the file yet, the day count runs from when it entered In Escrow and is marked provisional. Enter the real acceptance and close dates and the clock becomes exact.<br>' +
+    '<b>Task backlog.</b> Follow Up Boss returned zero open tasks on every contact attached to an open deal, against ' +
+    D.totalOpenTasksAccount.toLocaleString('en-US') + ' open tasks account-wide — nearly all post-closing drip steps on past clients.<br>' +
+    '<b>Brand.</b> Colors and the script wordmark are from theboutiquere.com — coral #F47E47, charcoal #313232, Sofia for the mark. Body text is Mulish, standing in for Colaborate, the licensed face the site uses.';
+})();
+</script>

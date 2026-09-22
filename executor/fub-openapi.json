@@ -1,0 +1,84 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Follow Up Boss (Boutique subset)",
+    "version": "1.0.0",
+    "description": "The FUB endpoints the Boutique TC skills use. Auth is HTTP Basic with the FUB API key as the username and a blank password — store the key in Executor's vault as the basic-auth username so it never reaches the model. Live-verified shapes 2026-09-18 (deal 93): POST /deals needs numeric stageId (pipelineId/names rejected) and accepts the native date fields directly; POST /tasks attaches by personId (no dealId field)."
+  },
+  "servers": [{ "url": "https://api.followupboss.com/v1" }],
+  "components": {
+    "securitySchemes": {
+      "fubBasic": { "type": "http", "scheme": "basic", "description": "Username = FUB API key (fka_...), password blank. Held in Executor vault." }
+    }
+  },
+  "security": [{ "fubBasic": [] }],
+  "paths": {
+    "/identity": {
+      "get": { "operationId": "getIdentity", "summary": "Verify key + whose account (read-only health check)",
+        "responses": { "200": { "description": "account + user" } } }
+    },
+    "/deals": {
+      "get": { "operationId": "listDeals", "summary": "List deals (dup check, active-file sweep)",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "maximum": 100 } },
+          { "name": "sort", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "deals[] + _metadata" } } },
+      "post": { "operationId": "createDeal", "summary": "Create a deal (additive). stageId required + numeric; native date fields post directly.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["name", "stageId"],
+          "properties": {
+            "name": { "type": "string" },
+            "stageId": { "type": "integer", "description": "Buyers: In Escrow 16 / Closed 18 / Canceled 35. Sellers: Temp 31 / Coming Soon 30 / Active 32 / In Escrow 17 / Closed 19." },
+            "price": { "type": "number" },
+            "mutualAcceptanceDate": { "type": "string", "format": "date" },
+            "dueDiligenceDate": { "type": "string", "format": "date" },
+            "customCR1": { "type": "string", "format": "date" },
+            "customCR2Date": { "type": "string", "format": "date" },
+            "projectedCloseDate": { "type": "string", "format": "date" },
+            "finalWalkThroughDate": { "type": "string", "format": "date" },
+            "possessionDate": { "type": "string", "format": "date" }
+          }
+        } } } },
+        "responses": { "201": { "description": "created deal (id, ...)" } } }
+    },
+    "/deals/{dealId}": {
+      "get": { "operationId": "getDeal", "summary": "Read one deal (confirm fields after write)",
+        "parameters": [{ "name": "dealId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "deal" } } }
+    },
+    "/tasks": {
+      "get": { "operationId": "listTasks", "summary": "List tasks",
+        "parameters": [{ "name": "limit", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "tasks[]" } } },
+      "post": { "operationId": "createTask", "summary": "Create a task (additive). Attaches by personId; there is no dealId field.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object", "required": ["name"],
+          "properties": {
+            "name": { "type": "string" },
+            "type": { "type": "string", "description": "e.g. Closing" },
+            "dueDate": { "type": "string", "format": "date" },
+            "personId": { "type": "integer" }
+          }
+        } } } },
+        "responses": { "201": { "description": "created task" } } }
+    },
+    "/people": {
+      "get": { "operationId": "listPeople", "summary": "Find/list contacts (resolve personId before tasks)",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } },
+          { "name": "fields", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "people[] + _metadata" } } }
+    },
+    "/templates": {
+      "get": { "operationId": "listTemplates", "summary": "List email templates (TBREG | drafts)",
+        "parameters": [{ "name": "limit", "in": "query", "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "templates[]" } } }
+    },
+    "/dealCustomFields": {
+      "get": { "operationId": "listDealCustomFields", "summary": "List deal custom fields (CR2 = customCR2Date, id 2)",
+        "responses": { "200": { "description": "dealCustomFields[]" } } }
+    }
+  }
+}

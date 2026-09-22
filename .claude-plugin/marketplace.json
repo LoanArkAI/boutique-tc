@@ -1,0 +1,14 @@
+{
+  "name": "loanark",
+  "owner": { "name": "Loan Ark (Don Stolan) for The Boutique Real Estate Group" },
+  "metadata": {
+    "description": "Loan Ark plugin marketplace — transaction-coordination tools for partner brokerages."
+  },
+  "plugins": [
+    {
+      "name": "boutique-tc",
+      "source": "./",
+      "description": "Transaction-coordination assistant for The Boutique Real Estate Group. Turns an accepted contract into a fully set-up Follow Up Boss deal, drafts the transaction emails, answers what's still missing on a file, runs the daily sweep and inbox watch, keeps a live pipeline board, and learns the TC's email voice. Additive to FUB, drafts-only outbound, broker signs off."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# GitHub Pages (Jekyll) config for the docs/ site.
+# pipeline-board.html carries real client data — keep it OUT of the public site.
+# Its source stays in the repo for the dashboard skill; the live board is the private
+# claude.ai artifact, never this public URL.
+exclude:
+  - pipeline-board.html
+  - _config.yml
