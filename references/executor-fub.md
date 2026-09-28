@@ -37,10 +37,10 @@ Executor exposes generic tools, not per-endpoint tools. To call a FUB operation:
 | Read one contact | `people.getPerson` | `{ personId, fields }` |
 | Create a contact (additive) | `people.createPerson` | `{ body: { firstName, lastName, emails:[{value}], phones:[{value}], tags } }` |
 | Update a contact (edit; confirm first) | `people.updatePerson` | `{ personId, body: { ...only changed fields } }` |
-| List pipelines | `pipelines.listPipelines` | `{}` |
-| List stages (get target stageId) | `stages.listStages` | `{ pipelineId? }` |
+| List pipelines + their deal stages | `pipelines.listPipelines` | `{}` — each pipeline has `stages[]`; **deal** stage ids come from here |
+| List people/lead stages | `stages.listStages` | `{}` — ⚠️ these are CONTACT lead stages (Attempted contact, etc.), NOT deal stages |
 | List users/agents (get userId) | `users.listUsers` | `{ limit }` |
-| Move a deal's stage (advance pipeline) | `deals.updateDeal` | `{ dealId, body: { stageId } }` |
+| Move a deal's stage (advance pipeline) | `deals.updateDeal` | `{ dealId, body: { stageId } }` — deal stageId from `listPipelines`, not `listStages`. Known: Sellers Temp 31 / Coming Soon 30 / Active 32 / In Escrow 17 / Closed 19; Buyers In Escrow 16 / Closed 18 / Canceled 35 |
 | Assign a deal to agent(s) | `deals.updateDeal` | `{ dealId, body: { users:[userId] } }` |
 | Assign a contact to an agent | `people.updatePerson` | `{ personId, body: { assignedUserId } }` |
 | Log a note on a contact | `notes.createNote` | `{ body: { personId, subject, body } }` (GET an example first) |

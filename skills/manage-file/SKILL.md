@@ -39,8 +39,11 @@ stageId/users, listStages, listUsers, createNote, createAppointment/updateAppoin
    / `deals.getDeal`) and, when the action is contact- or note-level, the `personId`
    (`people.listPeople`). If you can't pin the file confidently, ask which one.
 2. **Resolve any ids the action needs** (don't hardcode):
-   - Stage move → `listStages` (optionally by `pipelineId` from the deal) to get the target `stageId`.
-   - Assignment → `listUsers` to get the agent's `userId` by name.
+   - Deal stage move → `listPipelines` and read the target pipeline's `stages[]` for the deal
+     `stageId`. **Do not use `listStages`** — that returns contact/lead stages, not deal stages.
+     Known deal ids: Sellers Temp 31 / Coming Soon 30 / Active 32 / In Escrow 17 / Closed 19;
+     Buyers In Escrow 16 / Closed 18 / Canceled 35.
+   - Assignment → `listUsers` to get the agent's `userId` by name (Raj 1, Christina 2, McKenna 5).
 3. **Read the current record** (`getDeal` / `getPerson`) so you change only what's needed and can
    show the before/after.
 4. **Confirm** the exact change with the human. This is the write gate.
