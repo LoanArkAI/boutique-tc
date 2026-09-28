@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Follow Up Boss (Boutique subset)",
-    "version": "1.0.0",
-    "description": "The FUB endpoints the Boutique TC skills use. Auth is HTTP Basic with the FUB API key as the username and a blank password — store the key in Executor's vault as the basic-auth username so it never reaches the model. Live-verified shapes 2026-09-18 (deal 93): POST /deals needs numeric stageId (pipelineId/names rejected) and accepts the native date fields directly; POST /tasks attaches by personId (no dealId field)."
+    "version": "1.1.0",
+    "description": "The FUB endpoints the Boutique TC skills use. Auth is HTTP Basic with the FUB API key as the username and a blank password — store the key in Executor's vault as the basic-auth username so it never reaches the model. Live-verified shapes 2026-09-18 (deal 93): POST /deals needs numeric stageId (pipelineId/names rejected) and accepts the native date fields directly; POST /tasks attaches by personId (no dealId field). v1.1.0 adds write ops: createPerson, updatePerson, updateDeal, updateTask. DELETE is intentionally omitted (no-delete policy). Edits are meant to be human-confirmed by the calling skill; never overwrite client fields you weren't asked to change."
   },
   "servers": [{ "url": "https://api.followupboss.com/v1" }],
   "components": {
@@ -45,7 +45,25 @@
     "/deals/{dealId}": {
       "get": { "operationId": "getDeal", "summary": "Read one deal (confirm fields after write)",
         "parameters": [{ "name": "dealId", "in": "path", "required": true, "schema": { "type": "integer" } }],
-        "responses": { "200": { "description": "deal" } } }
+        "responses": { "200": { "description": "deal" } } },
+      "put": { "operationId": "updateDeal", "summary": "Update an existing deal (additive edits: date fields, price, stage). Send only the fields you are changing; never blank a field you were not asked to change. Confirm with the human first.",
+        "parameters": [{ "name": "dealId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "stageId": { "type": "integer" },
+            "price": { "type": "number" },
+            "mutualAcceptanceDate": { "type": "string", "format": "date" },
+            "dueDiligenceDate": { "type": "string", "format": "date" },
+            "customCR1": { "type": "string", "format": "date" },
+            "customCR2Date": { "type": "string", "format": "date" },
+            "projectedCloseDate": { "type": "string", "format": "date" },
+            "finalWalkThroughDate": { "type": "string", "format": "date" },
+            "possessionDate": { "type": "string", "format": "date" }
+          }
+        } } } },
+        "responses": { "200": { "description": "updated deal" } } }
     },
     "/tasks": {
       "get": { "operationId": "listTasks", "summary": "List tasks",
@@ -63,13 +81,67 @@
         } } } },
         "responses": { "201": { "description": "created task" } } }
     },
+    "/tasks/{taskId}": {
+      "put": { "operationId": "updateTask", "summary": "Update an existing task (e.g. change due date, or mark complete). Send only the fields you are changing.",
+        "parameters": [{ "name": "taskId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "type": { "type": "string" },
+            "dueDate": { "type": "string", "format": "date" },
+            "isCompleted": { "type": "boolean", "description": "true marks the task done" }
+          }
+        } } } },
+        "responses": { "200": { "description": "updated task" } } }
+    },
     "/people": {
       "get": { "operationId": "listPeople", "summary": "Find/list contacts (resolve personId before tasks)",
         "parameters": [
           { "name": "limit", "in": "query", "schema": { "type": "integer" } },
           { "name": "fields", "in": "query", "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "people[] + _metadata" } } }
+        "responses": { "200": { "description": "people[] + _metadata" } } },
+      "post": { "operationId": "createPerson", "summary": "Create a contact (additive). FUB dedups by email/phone; prefer this when no matching person exists.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "name": { "type": "string", "description": "full name, if not split" },
+            "emails": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "string" }, "type": { "type": "string" } }, "required": ["value"] } },
+            "phones": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "string" }, "type": { "type": "string" } }, "required": ["value"] } },
+            "tags": { "type": "array", "items": { "type": "string" } },
+            "source": { "type": "string" },
+            "customFields": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": true
+        } } } },
+        "responses": { "201": { "description": "created person (id, ...)" } } }
+    },
+    "/people/{personId}": {
+      "get": { "operationId": "getPerson", "summary": "Read one contact",
+        "parameters": [
+          { "name": "personId", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "fields", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "person" } } },
+      "put": { "operationId": "updatePerson", "summary": "Update an existing contact — name, emails, phones, tags, custom fields. Send only the fields you are changing; adding an item to emails/phones/tags appends. Never clear a field you were not asked to change. Confirm with the human first.",
+        "parameters": [{ "name": "personId", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": {
+          "type": "object",
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "name": { "type": "string" },
+            "emails": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "string" }, "type": { "type": "string" } }, "required": ["value"] } },
+            "phones": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "string" }, "type": { "type": "string" } }, "required": ["value"] } },
+            "tags": { "type": "array", "items": { "type": "string" } },
+            "customFields": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": true
+        } } } },
+        "responses": { "200": { "description": "updated person" } } }
     },
     "/templates": {
       "get": { "operationId": "listTemplates", "summary": "List email templates (TBREG | drafts)",
