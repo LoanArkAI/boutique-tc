@@ -37,6 +37,15 @@ Executor exposes generic tools, not per-endpoint tools. To call a FUB operation:
 | Read one contact | `people.getPerson` | `{ personId, fields }` |
 | Create a contact (additive) | `people.createPerson` | `{ body: { firstName, lastName, emails:[{value}], phones:[{value}], tags } }` |
 | Update a contact (edit; confirm first) | `people.updatePerson` | `{ personId, body: { ...only changed fields } }` |
+| List pipelines | `pipelines.listPipelines` | `{}` |
+| List stages (get target stageId) | `stages.listStages` | `{ pipelineId? }` |
+| List users/agents (get userId) | `users.listUsers` | `{ limit }` |
+| Move a deal's stage (advance pipeline) | `deals.updateDeal` | `{ dealId, body: { stageId } }` |
+| Assign a deal to agent(s) | `deals.updateDeal` | `{ dealId, body: { users:[userId] } }` |
+| Assign a contact to an agent | `people.updatePerson` | `{ personId, body: { assignedUserId } }` |
+| Log a note on a contact | `notes.createNote` | `{ body: { personId, subject, body } }` (GET an example first) |
+| Create an appointment | `appointments.createAppointment` | `{ body: { title, start, end, personId } }` (GET an example first) |
+| Update an appointment | `appointments.updateAppointment` | `{ appointmentId, body: { ...changed } }` |
 | List templates | `templates.listTemplates` | `{ limit }` |
 | List deal custom fields | `dealCustomFields.listDealCustomFields` | `{}` |
 
