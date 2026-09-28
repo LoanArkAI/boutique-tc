@@ -107,9 +107,11 @@ answers as tags — they decide which of the 53 checklist items this file actual
 Summarize: the deal (address, side, client, price), the confirmed dates, the tags, and the
 count of tasks that will be created. Ask for a yes. This is the write gate.
 
-### 5. Write to FUB (additive, via Executor)
+### 5. Write to FUB (via Executor)
 Call FUB through the **Executor** MCP — `search` the operation, then `invoke` it (see
-`../../references/executor-fub.md` for ids, the `body` wrapper, and proven shapes). Order:
+`../../references/executor-fub.md` for ids, the `body` wrapper, and proven shapes). Two cases:
+
+**New deal (from step 1 "create"):**
 - `people.listPeople` → resolve/confirm the contact's `personId` (tasks attach to a person).
 - `deals.createDeal` with `{ body: { name, stageId, price, and every confirmed date field
   (`mutualAcceptanceDate`, `dueDiligenceDate`, `customCR1`, `customCR2Date`,
@@ -117,8 +119,19 @@ Call FUB through the **Executor** MCP — `search` the operation, then `invoke` 
 - `tasks.createTask` for each side-aware item, `{ body: { name, type:"Closing", dueDate, personId } }`.
 - Apply the `cond:*` / `side:*` tags to the contact.
 
-Additive only — never invoke an update or delete on an existing record. If an invoke fails,
-stop and report the error; do not retry blindly or half-finish silently.
+**Existing deal (update / back-fill from step 1 "update"):**
+- `deals.getDeal { dealId }` first — read what's already there so you only change what's needed.
+- `deals.updateDeal { dealId, body: { ...only the date fields that changed or were blank } }` —
+  send **only** the fields you are setting. Never include `name`/`price`/`people` you weren't
+  asked to change, and never blank a field that already has a value. This is how you back-fill
+  the deals already in FUB that have no dates yet: fill the blank date fields, leave the rest.
+- Add any still-missing side-aware tasks/tags additively — don't duplicate tasks that already exist.
+- To correct a contact you were asked to fix: `people.updatePerson { personId, body: { ...only
+  changed fields } }` (adding to `emails`/`phones`/`tags` appends). Same field-scoped rule.
+
+**Never delete anything** (there is no delete op). Updates are allowed but stay field-scoped and
+were confirmed at the step-4 gate. If an invoke fails, stop and report the exact error; do not
+retry blindly or half-finish silently.
 
 (Local Claude Code only, offline fallback: `scripts/fub_create_deal.py` + `.env.raj` does the
 same writes directly. In Cowork, always use Executor — there is no local key.)
