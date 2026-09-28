@@ -29,9 +29,14 @@ Executor exposes generic tools, not per-endpoint tools. To call a FUB operation:
 | List deals (dup check, sweep) | `deals.listDeals` | `{ limit, sort }` |
 | Create deal (additive) | `deals.createDeal` | `{ body: { name, stageId, price, mutualAcceptanceDate, dueDiligenceDate, customCR1, customCR2Date, projectedCloseDate, finalWalkThroughDate, possessionDate } }` |
 | Read one deal | `deals.getDeal` | `{ dealId }` |
+| Update a deal (edit dates/price; confirm first) | `deals.updateDeal` | `{ dealId, body: { ...only changed fields } }` |
 | List tasks | `tasks.listTasks` | `{ limit }` |
 | Create task (additive) | `tasks.createTask` | `{ body: { name, type, dueDate, personId } }` |
+| Update a task (due date / mark done) | `tasks.updateTask` | `{ taskId, body: { dueDate, isCompleted } }` |
 | Find/list contacts | `people.listPeople` | `{ limit, fields }` |
+| Read one contact | `people.getPerson` | `{ personId, fields }` |
+| Create a contact (additive) | `people.createPerson` | `{ body: { firstName, lastName, emails:[{value}], phones:[{value}], tags } }` |
+| Update a contact (edit; confirm first) | `people.updatePerson` | `{ personId, body: { ...only changed fields } }` |
 | List templates | `templates.listTemplates` | `{ limit }` |
 | List deal custom fields | `dealCustomFields.listDealCustomFields` | `{}` |
 
@@ -44,6 +49,9 @@ Executor exposes generic tools, not per-endpoint tools. To call a FUB operation:
 - Dates as `YYYY-MM-DD`.
 
 ## Guardrails (unchanged)
-- Additive only — create deals/tasks; never update or delete existing records via invoke.
+- Additive-first. Creating is always safe. Updating an existing deal, task, or contact is
+  allowed (v1.1.0 ops), but only for the specific fields you were asked to change, and only
+  after the human confirms — never blank or overwrite a field you weren't asked to touch.
+  Never delete (no delete op exists in the spec).
 - Confirm dates with the human before `createDeal` (refuse-over-guess).
 - A read error / missing connection → say so; never fall back to a raw key or a guess.
