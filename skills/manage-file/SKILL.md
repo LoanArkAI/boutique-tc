@@ -1,5 +1,6 @@
 ---
 name: manage-file
+version: 1.0.0
 description: >-
   Take an action on an existing Follow Up Boss file for The Boutique — move a deal forward in
   the pipeline (change its stage), log a note on a contact or deal, create or reschedule an
