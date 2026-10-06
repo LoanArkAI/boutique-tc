@@ -38,7 +38,6 @@ they aren't GitHub org members).
 | `draft-emails` | Draft the transaction emails from the `TBREG \|` templates (drafts only); applies learned voice rules |
 | `feedback-loop` | Learn McKenna's voice from draft-vs-sent; maintain the shared voice-rules file |
 | `manage-file` | Move a deal's stage, log a note, set an appointment, reassign, mark a task done (confirm-first) |
-| `ooo-handoff` | While McKenna is out: hourly cloud routine forwards what reached her and emails a handoff summary to the coworker(s) she chose |
 | `setup` | First-run: connectors, FUB key, and the three scheduled tasks |
 
 ## How Follow Up Boss is reached
@@ -50,11 +49,19 @@ own vault — the key never enters Cowork, a prompt, an artifact, or this repo. 
 ## Guardrails
 
 - Additive to FUB — never edits or deletes existing client or deal data.
-- Drafts only outbound — every email is left for a human to send. **One exception:**
-  `ooo-handoff` sends forwards and a handoff summary, but only to the coverage people McKenna
-  named when she turned OOO on — never to clients, escrow, or other agents.
+- Drafts only outbound — every email is left for a human to send. (The separate
+  `ooo-handoff` skill below is the one exception, and it ships outside this plugin.)
 - The FUB key stays in the Executor vault — never printed, logged, or committed.
 - Broker (Caroline) signs off at the end.
+
+## Standalone skill: OOO handoff
+
+[`standalone-skills/ooo-handoff/`](standalone-skills/ooo-handoff/SKILL.md) is **not part of the
+plugin** — McKenna uploads it to her claude.ai account on its own
+([`ooo-handoff.zip`](standalone-skills/ooo-handoff.zip)). While she's out of office, an hourly
+cloud routine forwards what reached her, sends a 7am/4pm daily brief of her files in place of
+the sweep, and emails a handoff summary to the coworker(s) she chose. It is the only thing
+here that sends email, and only to those coworkers. Not instrumented — no `metrics/` record.
 
 ## Working on the skills
 

@@ -9,29 +9,22 @@ Versions are per skill, tagged `<skill>/v<semver>`. The plugin version in
 
 ---
 
-## plugin 0.5.0 — 2026-10-06
+## ooo-handoff 1.0.0 (standalone, not in the plugin) — 2026-10-06
 
-### ooo-handoff 1.0.0
 **Hypothesis:** while McKenna is out, file traffic sits unread in her inbox until she's back,
-and deadlines slip in the gap. An hourly routine that forwards what reached her and emails one
-summary to the coverage people she named should get every file-related arrival in front of
-someone within the hour. Measured as `messages_forwarded` per run against `unmatched` and
-`skipped`: forwarding should be near-complete for file mail, with little noise.
-**Changed:** new skill. Turn-on collects the OOO window and one or more coverage recipients,
-creates the `TBREG/OOO-handed-off` Gmail label, and registers the hourly
-**TBREG — OOO Handoff** routine with the config in its prompt. Each run hands off new Gmail,
-McKenna's due/overdue FUB tasks and DocuSign completions; a closing summary goes out once
-the window ends.
-**Guardrail change:** first skill that sends email. Scoped to the confirmed coverage
-recipients, forwards and the summary only; wire/payment messages are listed, never
-forwarded; read-only on FUB.
-**Runs in the cloud only:** a Claude Code on the web routine created from McKenna's account
-(her Gmail/DocuSign connectors), fresh session per hourly run, environment network allowing
-`executor.sh`. No local fallback — she's away and her laptop is closed. All state lives in her
-mailbox (the label, and the closing summary in Sent), the config in the routine prompt.
-**Known gap:** cloud containers are discarded, so run records don't reach
-`metrics/runs.jsonl`; counts go in the summary email instead for now.
-**Watch:** `skipped` — a real file message classed as bulk is the failure that matters.
+and her daily sweep reaches no one (it only drafts, and runs on her closed laptop). An hourly
+cloud routine that forwards what reached her, plus a 7am/4pm brief of her files, sent to the
+coverage people she named, should put every file-related arrival and deadline in front of
+someone within the hour.
+**Shape:** uploaded to her claude.ai account as its own skill (`standalone-skills/ooo-handoff.zip`),
+run by a Claude Code on the web routine with her Gmail, DocuSign and Executor connectors. Config
+in the routine prompt; state in her mailbox (a label, and subjects in Sent). The daily brief is
+lighter than `daily-sweep` — FUB dates and tasks, not the 53-item checklist.
+**Guardrail:** the only thing in this repo that sends email — to the confirmed coverage
+recipients only; wire/payment messages are listed, never forwarded; read-only on FUB.
+**Not instrumented:** no `log_run.py`, no `metrics/runs.jsonl` record — cloud runs are
+discarded, and that was accepted. Judge it by the summaries in her Sent mail.
+**Watch:** a real file message classed as bulk and skipped.
 
 ---
 
