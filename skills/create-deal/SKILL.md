@@ -1,6 +1,6 @@
 ---
 name: create-deal
-version: 1.1.0
+version: 2.0.0
 description: >-
   Open a new transaction in Follow Up Boss for The Boutique Real Estate Group from an
   accepted purchase contract. Use this whenever McKenna, Raj, or the team says a deal
