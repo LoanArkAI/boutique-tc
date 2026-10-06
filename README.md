@@ -37,6 +37,8 @@ they aren't GitHub org members).
 | `whats-missing` | What's blocking a deadline on one file |
 | `draft-emails` | Draft the transaction emails from the `TBREG \|` templates (drafts only); applies learned voice rules |
 | `feedback-loop` | Learn McKenna's voice from draft-vs-sent; maintain the shared voice-rules file |
+| `manage-file` | Move a deal's stage, log a note, set an appointment, reassign, mark a task done (confirm-first) |
+| `ooo-handoff` | While McKenna is out: hourly, forward what reached her and email a handoff summary to the coworker(s) she chose |
 | `setup` | First-run: connectors, FUB key, and the three scheduled tasks |
 
 ## How Follow Up Boss is reached
@@ -48,7 +50,9 @@ own vault — the key never enters Cowork, a prompt, an artifact, or this repo. 
 ## Guardrails
 
 - Additive to FUB — never edits or deletes existing client or deal data.
-- Drafts only outbound — every email is left for a human to send.
+- Drafts only outbound — every email is left for a human to send. **One exception:**
+  `ooo-handoff` sends forwards and a handoff summary, but only to the coverage people McKenna
+  named when she turned OOO on — never to clients, escrow, or other agents.
 - The FUB key stays in the Executor vault — never printed, logged, or committed.
 - Broker (Caroline) signs off at the end.
 

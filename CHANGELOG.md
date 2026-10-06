@@ -9,6 +9,27 @@ Versions are per skill, tagged `<skill>/v<semver>`. The plugin version in
 
 ---
 
+## plugin 0.5.0 — 2026-10-06
+
+### ooo-handoff 1.0.0
+**Hypothesis:** while McKenna is out, file traffic sits unread in her inbox until she's back,
+and deadlines slip in the gap. An hourly routine that forwards what reached her and emails one
+summary to the coverage people she named should get every file-related arrival in front of
+someone within the hour. Measured as `messages_forwarded` per run against `unmatched` and
+`skipped`: forwarding should be near-complete for file mail, with little noise.
+**Changed:** new skill. Turn-on collects the OOO window and one or more coverage recipients,
+creates the `TBREG/OOO-handed-off` Gmail label, and registers the hourly
+**TBREG — OOO Handoff** routine with the config in its prompt. Each run hands off new Gmail,
+McKenna's due/overdue FUB tasks and DocuSign completions; a closing summary goes out once
+the window ends.
+**Guardrail change:** first skill that sends email. Scoped to the confirmed coverage
+recipients, forwards and the summary only; wire/payment messages are listed, never
+forwarded; read-only on FUB.
+**Watch:** `skipped` — a real file message classed as bulk is the failure that matters.
+And whether runs fire at all while her laptop is closed, if it's a local scheduled task.
+
+---
+
 ## plugin 0.4.2 — 2026-10-06
 
 Release housekeeping. No skill text changed except version stamps; this entry catches the
