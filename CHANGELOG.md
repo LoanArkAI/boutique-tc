@@ -25,8 +25,13 @@ the window ends.
 **Guardrail change:** first skill that sends email. Scoped to the confirmed coverage
 recipients, forwards and the summary only; wire/payment messages are listed, never
 forwarded; read-only on FUB.
+**Runs in the cloud only:** a Claude Code on the web routine created from McKenna's account
+(her Gmail/DocuSign connectors), fresh session per hourly run, environment network allowing
+`executor.sh`. No local fallback — she's away and her laptop is closed. All state lives in her
+mailbox (the label, and the closing summary in Sent), the config in the routine prompt.
+**Known gap:** cloud containers are discarded, so run records don't reach
+`metrics/runs.jsonl`; counts go in the summary email instead for now.
 **Watch:** `skipped` — a real file message classed as bulk is the failure that matters.
-And whether runs fire at all while her laptop is closed, if it's a local scheduled task.
 
 ---
 

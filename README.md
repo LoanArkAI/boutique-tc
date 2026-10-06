@@ -38,7 +38,7 @@ they aren't GitHub org members).
 | `draft-emails` | Draft the transaction emails from the `TBREG \|` templates (drafts only); applies learned voice rules |
 | `feedback-loop` | Learn McKenna's voice from draft-vs-sent; maintain the shared voice-rules file |
 | `manage-file` | Move a deal's stage, log a note, set an appointment, reassign, mark a task done (confirm-first) |
-| `ooo-handoff` | While McKenna is out: hourly, forward what reached her and email a handoff summary to the coworker(s) she chose |
+| `ooo-handoff` | While McKenna is out: hourly cloud routine forwards what reached her and emails a handoff summary to the coworker(s) she chose |
 | `setup` | First-run: connectors, FUB key, and the three scheduled tasks |
 
 ## How Follow Up Boss is reached

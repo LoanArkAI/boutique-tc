@@ -55,25 +55,51 @@ Run interactively with McKenna (never from a scheduled run).
    / payment instructions) and what is skipped (bulk marketing, newsletters, automated
    notices not tied to a file — counted in the summary, not forwarded).
 4. **Create the label** `TBREG/OOO-handed-off` in her Gmail if it doesn't exist.
-5. **Register the hourly routine** on her account — cron `7 * * * *` (minute 7, every hour),
-   named **TBREG — OOO Handoff**. Its prompt is self-contained and carries the config, so
-   nothing depends on a local file:
+5. **Register the hourly cloud routine** — see [Running in the cloud](#running-in-the-cloud).
+   Never a local scheduled task: she's away, her laptop will be closed, and a local task
+   only fires while the Claude app is open. If a cloud routine can't be created, stop and
+   say why — don't fall back to local.
+6. **Run it once now** (fire the routine) so she can see the first summary land before she
+   leaves, and so any connector problem shows up while she can still fix it.
+7. **Confirm back:** window, recipients, routine name and its next run time.
 
-   ```
-   Run the ooo-handoff skill in scheduled mode.
-   OOO window: <start ISO 8601> to <end ISO 8601> (<IANA time zone>)
-   Coverage recipients: <Name <email>>, <Name <email>>
-   Confirmed by McKenna on <date>.
-   ```
+## Running in the cloud
+The routine runs as a **Claude Code on the web routine** (claude.ai/code → Routines) that
+starts a fresh cloud session every hour. Nothing runs on anyone's computer. It must be
+created **from McKenna's own claude.ai account**, because it reads her Gmail and DocuSign
+through *her* connectors; a routine created from someone else's account sees their mailbox.
 
-   Prefer a routine that runs in the cloud on her account, so it fires while her laptop is
-   closed. If only local scheduled tasks are available, tell her plainly: **the Claude app
-   on that computer must stay open and online for the handoff to run** — a closed laptop
-   means nothing is handed off until it reopens.
-6. **Run it once now** (Run now) so connector/FUB permission prompts are approved before
-   she leaves, and so she can see the first summary land.
-7. **Confirm back:** window, recipients, routine name and next run time, and the laptop
-   caveat if it applies.
+Prerequisites on her account (check each, and stop with the fix if one is missing):
+- **Connectors** connected at claude.ai/customize/connectors: **Gmail** (required) and
+  **DocuSign**.
+- **A cloud environment** with the `LoanArkAI/boutique-tc` repo, so the session has this
+  skill, and whose **network access allows `executor.sh`** — the repo's `.mcp.json` reaches
+  Follow Up Boss through Executor at that host. Default network policies block it; set
+  Network access to Custom and add `executor.sh` under Allowed domains. (Alternatively, add
+  Executor as a custom connector on her account and list it with the others.) She also signs
+  into Executor once, as in `setup` step 2.
+
+The routine:
+- **Name:** `TBREG — OOO Handoff`
+- **Schedule:** `CRON_TZ=<her IANA time zone> 7 * * * *` — minute 7 of every hour.
+- **A fresh session per run**, in the environment above, with the connectors Gmail and
+  DocuSign (plus Executor if added as a connector).
+- **Prompt** — self-contained, because each run starts from nothing:
+
+  ```
+  Run the ooo-handoff skill (skills/ooo-handoff/SKILL.md) in scheduled mode.
+  OOO window: <start ISO 8601> to <end ISO 8601> (<IANA time zone>)
+  Coverage recipients: <Name <email>>, <Name <email>>
+  Confirmed by McKenna on <date>.
+  Do not commit or push anything to the repo.
+  ```
+
+If you're running inside her cloud session and have the routine tools (`create_trigger`
+with `create_new_session_on_fire`, `connectors`), create it directly. Otherwise walk her
+through creating it in the Routines page with exactly the values above.
+
+Every run starts from a clean session, which is why all state lives in her mailbox (the
+`TBREG/OOO-handed-off` label) and the config lives in the prompt. Nothing on disk survives.
 
 **Changing coverage mid-OOO** ("have Raj cover too", "extend to Friday"): update the
 routine's prompt with the new window/recipients, re-confirmed the same way. Items already
@@ -84,8 +110,9 @@ asks — one catch-up summary of everything already handed off.
 No human mid-run. Read widely, send only to the configured recipients, write nothing else.
 
 1. **Check the window.** If now is before the start, stop — nothing to do. If now is past
-   the end, send the **closing summary** (below) once, then stop; if the closing summary was
-   already sent, do nothing and note in the run log that the routine should be removed.
+   the end, send the **closing summary** (below) once, then stop. To know whether it went
+   already, search her Sent mail for the subject `McKenna is back — handoff ended` since the
+   window's end — there is no other memory between runs. If it was sent, do nothing.
 2. **Gather what's new** — everything that reached McKenna since the window opened that is
    not yet labeled `TBREG/OOO-handed-off`:
    - **Gmail:** inbox messages from the window. Skip mail she sent herself and anything
@@ -126,9 +153,11 @@ No human mid-run. Read widely, send only to the configured recipients, write not
 ## The closing summary (first run after the window ends)
 One last email to the coverage recipients **and McKenna**: "McKenna is back — handoff ended",
 listing every file that had activity during the window with what was handed off, so she can
-pick up where her coverage left off. Then the routine has nothing left to do — tell her (in
-the closing email) to delete **TBREG — OOO Handoff**, or delete it yourself if the routine
-tools allow.
+pick up where her coverage left off. Subject exactly `McKenna is back — handoff ended`
+(the next run looks for it). Then turn the routine off: if the session has `update_trigger`,
+set **TBREG — OOO Handoff** to `enabled: false` (a session the routine started can disable it
+but not delete it). Otherwise say in the closing email that she should delete it from
+Routines; until then each run finds the closing summary already sent and does nothing.
 
 ## Turning it off early — "I'm back"
 Delete or disable the **TBREG — OOO Handoff** routine, then send the closing summary once
@@ -139,6 +168,12 @@ Delete or disable the **TBREG — OOO Handoff** routine, then send the closing s
 This skill produces output, so it records what it did — see
 [`../../references/run-logging.md`](../../references/run-logging.md) for the full contract.
 Log the hourly runs and the turn-on / turn-off runs alike.
+
+In the cloud each run's container is thrown away, so the record never reaches
+`metrics/runs.jsonl` — and the routine must not commit to the repo hourly to save it. Log
+anyway (it costs nothing and keeps the contract uniform), and put the same counts in the
+summary's COVERAGE line so the mailbox carries the record. Persisting cloud run logs is a
+known gap for a later version.
 
 Before starting the work:
 
